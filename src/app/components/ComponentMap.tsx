@@ -112,131 +112,141 @@ export default function ComponentMap({
                 height={height}
                 className={zoom.isDragging ? 'dragging' : undefined}
               >
-                <rect
-                  x={0}
-                  y={0}
-                  width={width}
-                  height={height}
-                  fill='#242529'
-                  rx={14}
-                />
-                <LinearGradient
-                  id='links-gradient'
-                  from='#fd9b93'
-                  to='#fe6e9e'
-                />
-                {/* <rect
-                 x={0}
-                 y={0}
-                  width={totalWidth}
-                  height={totalHeight}
-                  rx={14}
-                  fill='#242529'
-                /> */}
-                <Group top={margin.top} left={margin.left}>
-                  <Tree
-                    root={hierarchy(data, (d) =>
-                      d.isExpanded ? null : d.children,
-                    )}
-                    size={[sizeWidth, sizeHeight]}
-                    separation={(a, b) =>
-                      (a.parent === b.parent ? 1 : 0.5) / a.depth
-                    }
-                  >
-                    {(tree) => (
-                      <Group top={origin.y} left={origin.x}>
-                        {tree.links().map((link, i) => (
-                          <LinkComponent
-                            key={i}
-                            data={link}
-                            percent={stepPercent}
-                            stroke='rgb(254,110,158,0.6)'
-                            strokeWidth='1'
-                            fill='none'
-                          />
-                        ))}
+                <CustomProjection
+                  // data={snapshots}
+                  scale={zoom.transformMatrix.scaleX}
+                  translate={[
+                    zoom.transformMatrix.translateX,
+                    zoom.transformMatrix.translateY,
+                  ]}
+                >
+                  <rect
+                    x={0}
+                    y={0}
+                    width={width}
+                    height={height}
+                    fill='#242529'
+                    rx={14}
+                  />
 
-                        {tree.descendants().map((node, key) => {
-                          const width = 40;
-                          const height = 15;
+                  <LinearGradient
+                    id='links-gradient'
+                    from='#fd9b93'
+                    to='#fe6e9e'
+                  />
+                  <rect
+                    x={0}
+                    y={0}
+                    width={totalWidth}
+                    height={totalHeight}
+                    rx={14}
+                    fill='#242529'
+                  />
 
-                          let top: number;
-                          let left: number;
-                          if (layout === 'polar') {
-                            const [radialX, radialY] = pointRadial(
-                              node.x,
-                              node.y,
+                  <Group top={margin.top} left={margin.left}>
+                    <Tree
+                      root={hierarchy(data, (d) =>
+                        d.isExpanded ? null : d.children,
+                      )}
+                      size={[sizeWidth, sizeHeight]}
+                      separation={(a, b) =>
+                        (a.parent === b.parent ? 1 : 0.5) / a.depth
+                      }
+                    >
+                      {(tree) => (
+                        <Group top={origin.y} left={origin.x}>
+                          {tree.links().map((link, i) => (
+                            <LinkComponent
+                              key={i}
+                              data={link}
+                              percent={stepPercent}
+                              stroke='rgb(254,110,158,0.6)'
+                              strokeWidth='1'
+                              fill='none'
+                            />
+                          ))}
+
+                          {tree.descendants().map((node, key) => {
+                            const width = 40;
+                            const height = 15;
+
+                            let top: number;
+                            let left: number;
+                            if (layout === 'polar') {
+                              const [radialX, radialY] = pointRadial(
+                                node.x,
+                                node.y,
+                              );
+                              top = radialY;
+                              left = radialX;
+                            } else if (orientation === 'vertical') {
+                              top = node.y;
+                              left = node.x;
+                            } else {
+                              top = node.x;
+                              left = node.y;
+                            }
+
+                            return (
+                              <Group top={top} left={left} key={key}>
+                                {node.depth === 0 && (
+                                  <circle
+                                    r={12}
+                                    fill="url('#links-gradient')"
+                                    onClick={() => {
+                                      node.data.isExpanded = !node.data
+                                        .isExpanded;
+                                      forceUpdate();
+                                    }}
+                                  />
+                                )}
+                                {node.depth !== 0 && (
+                                  <rect
+                                    height={height}
+                                    width={width}
+                                    y={-height / 2}
+                                    x={-width / 2}
+                                    fill='#272b4d'
+                                    stroke={
+                                      node.data.children ? '#03c0dc' : '#26deb0'
+                                    }
+                                    strokeWidth={1}
+                                    strokeDasharray={
+                                      node.data.children ? '0' : '2,2'
+                                    }
+                                    strokeOpacity={node.data.children ? 1 : 0.6}
+                                    rx={node.data.children ? 0 : 10}
+                                    onClick={() => {
+                                      node.data.isExpanded = !node.data
+                                        .isExpanded;
+                                      forceUpdate();
+                                    }}
+                                  />
+                                )}
+                                <text
+                                  dy='.33em'
+                                  fontSize={9}
+                                  fontFamily='Arial'
+                                  textAnchor='middle'
+                                  style={{ pointerEvents: 'none' }}
+                                  fill={
+                                    node.depth === 0
+                                      ? '#71248e'
+                                      : node.children
+                                      ? 'white'
+                                      : '#26deb0'
+                                  }
+                                >
+                                  {node.data.name}
+                                </text>
+                              </Group>
                             );
-                            top = radialY;
-                            left = radialX;
-                          } else if (orientation === 'vertical') {
-                            top = node.y;
-                            left = node.x;
-                          } else {
-                            top = node.x;
-                            left = node.y;
-                          }
-
-                          return (
-                            <Group top={top} left={left} key={key}>
-                              {node.depth === 0 && (
-                                <circle
-                                  r={12}
-                                  fill="url('#links-gradient')"
-                                  onClick={() => {
-                                    node.data.isExpanded = !node.data
-                                      .isExpanded;
-                                    forceUpdate();
-                                  }}
-                                />
-                              )}
-                              {node.depth !== 0 && (
-                                <rect
-                                  height={height}
-                                  width={width}
-                                  y={-height / 2}
-                                  x={-width / 2}
-                                  fill='#272b4d'
-                                  stroke={
-                                    node.data.children ? '#03c0dc' : '#26deb0'
-                                  }
-                                  strokeWidth={1}
-                                  strokeDasharray={
-                                    node.data.children ? '0' : '2,2'
-                                  }
-                                  strokeOpacity={node.data.children ? 1 : 0.6}
-                                  rx={node.data.children ? 0 : 10}
-                                  onClick={() => {
-                                    node.data.isExpanded = !node.data
-                                      .isExpanded;
-                                    forceUpdate();
-                                  }}
-                                />
-                              )}
-                              <text
-                                dy='.33em'
-                                fontSize={9}
-                                fontFamily='Arial'
-                                textAnchor='middle'
-                                style={{ pointerEvents: 'none' }}
-                                fill={
-                                  node.depth === 0
-                                    ? '#71248e'
-                                    : node.children
-                                    ? 'white'
-                                    : '#26deb0'
-                                }
-                              >
-                                {node.data.name}
-                              </text>
-                            </Group>
-                          );
-                        })}
-                      </Group>
-                    )}
-                  </Tree>
-                </Group>
-
+                          })}
+                        </Group>
+                      )}
+                    </Tree>
+                  </Group>
+                </CustomProjection>
                 <rect
                   x={0}
                   y={0}
@@ -287,49 +297,51 @@ export default function ComponentMap({
             ))}
           </select>
         </label>
-        <style jsx>{`
-          .container {
-            position: relative;
-          }
-          svg {
-            cursor: grab;
-          }
-          svg.dragging {
-            cursor: grabbing;
-          }
-          .btn {
-            margin: 0;
-            text-align: center;
-            border: none;
-            background: #dde1fe;
-            color: #222;
-            padding: 0 4px;
-            border-top: 1px solid #8993f9;
-          }
-          .btn-lg {
-            font-size: 12px;
-            line-height: 1;
-            padding: 4px;
-          }
-          .btn-zoom {
-            width: 26px;
-            font-size: 22px;
-          }
-          .btn-bottom {
-            margin-bottom: 1rem;
-          }
-          .controls {
-            position: absolute;
-            bottom: 20px;
-            right: 15px;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-          }
-          label {
-            font-size: 12px;
-          }
-        `}</style>
+        <style jsx>
+          {`
+            .container {
+              position: relative;
+            }
+            svg {
+              cursor: grab;
+            }
+            svg.dragging {
+              cursor: grabbing;
+            }
+            .btn {
+              margin: 0;
+              text-align: center;
+              border: none;
+              background: #dde1fe;
+              color: #222;
+              padding: 0 4px;
+              border-top: 1px solid #8993f9;
+            }
+            .btn-lg {
+              font-size: 12px;
+              line-height: 1;
+              padding: 4px;
+            }
+            .btn-zoom {
+              width: 26px;
+              font-size: 22px;
+            }
+            .btn-bottom {
+              margin-bottom: 1rem;
+            }
+            .controls {
+              position: absolute;
+              bottom: 20px;
+              right: 15px;
+              display: flex;
+              flex-direction: column;
+              align-items: flex-end;
+            }
+            label {
+              font-size: 12px;
+            }
+          `}
+        </style>
       </div>
     </>
   );

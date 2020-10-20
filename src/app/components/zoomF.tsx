@@ -1,10 +1,11 @@
 /* eslint-disable react/jsx-handler-names */
 import React, { useState } from 'react';
 import * as topojson from 'topojson-client';
-import { scaleQuantize } from '@visx/scale';
-import { CustomProjection, Graticule } from '@visx/geo';
+import { CustomProjection} from '@visx/geo';
 import { Projection } from '@visx/geo/lib/types';
-import { Zoom } from '@visx/zoom';
+import { Zoom } from ' ';
+
+import topology from './world-topo.json';
 
 export type GeoCustomProps = {
   width: number;
@@ -12,64 +13,24 @@ export type GeoCustomProps = {
   events?: boolean;
 };
 
-// interface FeatureShape {
-//   type: 'Feature';
-//   id: string;
-//   geometry: { coordinates: [number, number][][]; type: 'Polygon' };
-//   properties: { name: string };
-// }
+// dont really need this background
+export const background = 'blue';
 
-// export const background = '#252b7e';
-// const purple = '#201c4e';
-// const PROJECTIONS: { [projection: string]: Projection } = {
-//   geoConicConformal,
-//   geoTransverseMercator,
-//   geoNaturalEarth1,
-//   geoConicEquidistant,
-//   geoOrthographic,
-//   geoStereographic,
-// };
+const PROJECTIONS: { [projection: string]: Projection } = {};
 
-// @ts-ignore
-// const world = topojson.feature(topology, topology.objects.units) as {
-//   type: 'FeatureCollection';
-//   features: FeatureShape[];
-// };
 
-// const color = scaleQuantize({
-//   domain: [
-//     Math.min(...world.features.map(f => f.geometry.coordinates.length)),
-//     Math.max(...world.features.map(f => f.geometry.coordinates.length)),
-//   ],
-//   range: [
-//     '#019ece',
-//     '#f4448b',
-//     '#fccf35',
-//     '#82b75d',
-//     '#b33c88',
-//     '#fc5e2f',
-//     '#f94b3a',
-//     '#f63a48',
-//     '#dde1fe',
-//     '#8993f9',
-//     '#b6c8fb',
-//     '#65fe8d',
-//   ],
-// });
+// we will not need the data below its dummy data
+const world = topojson.feature(topology, topology.objects.units) as {};
 
-export default function GeoCustom({
-  width,
-  height,
-  events = true,
-}: GeoCustomProps) {
-  const [projection, setProjection] = useState<keyof typeof PROJECTIONS>(
-    'geoConicConformal',
-  );
+
+
+export default function GeoCustom({ width, height, events = true }: GeoCustomProps) {
+  const [setProjection] = useState<string>("forFun");
 
   const centerX = width / 2;
   const centerY = height / 2;
   const initialScale = (width / 630) * 100;
-
+  console.log(world.features);
   return width < 10 ? null : (
     <>
       <Zoom
@@ -88,53 +49,18 @@ export default function GeoCustom({
           skewY: 0,
         }}
       >
-        {(zoom) => (
-          <div className='container'>
-            <svg
-              width={width}
-              height={height}
-              className={zoom.isDragging ? 'dragging' : undefined}
-            >
-              <rect
-                x={0}
-                y={0}
-                width={width}
-                height={height}
-                fill={background}
-                rx={14}
-              />
-              <CustomProjection<FeatureShape>
-                projection={PROJECTIONS[projection]}
+       
+        {zoom => (
+          <div className="container">
+            <svg width={width} height={height} className={zoom.isDragging ? 'dragging' : undefined}>
+              <rect x={0} y={0} width={width} height={height} fill={background} rx={14} />
+              <CustomProjection
+                
                 data={world.features}
                 scale={zoom.transformMatrix.scaleX}
-                translate={[
-                  zoom.transformMatrix.translateX,
-                  zoom.transformMatrix.translateY,
-                ]}
+                translate={[zoom.transformMatrix.translateX, zoom.transformMatrix.translateY]}
               >
-                {(customProjection) => (
-                  <g>
-                    <Graticule
-                      graticule={(g) => customProjection.path(g) || ''}
-                      stroke={purple}
-                    />
-                    {customProjection.features.map(({ feature, path }, i) => (
-                      <path
-                        key={`map-feature-${i}`}
-                        d={path || ''}
-                        fill={color(feature.geometry.coordinates.length)}
-                        stroke={background}
-                        strokeWidth={0.5}
-                        onClick={() => {
-                          if (events)
-                            alert(
-                              `Clicked: ${feature.properties.name} (${feature.id})`,
-                            );
-                        }}
-                      />
-                    ))}
-                  </g>
-                )}
+                
               </CustomProjection>
 
               {/** intercept all mouse events */}
@@ -144,7 +70,7 @@ export default function GeoCustom({
                 width={width}
                 height={height}
                 rx={14}
-                fill='transparent'
+                fill="transparent"
                 onTouchStart={zoom.dragStart}
                 onTouchMove={zoom.dragMove}
                 onTouchEnd={zoom.dragEnd}
@@ -157,20 +83,20 @@ export default function GeoCustom({
               />
             </svg>
             {events && (
-              <div className='controls'>
+              <div className="controls">
                 <button
-                  className='btn btn-zoom'
+                  className="btn btn-zoom"
                   onClick={() => zoom.scale({ scaleX: 1.2, scaleY: 1.2 })}
                 >
                   +
                 </button>
                 <button
-                  className='btn btn-zoom btn-bottom'
+                  className="btn btn-zoom btn-bottom"
                   onClick={() => zoom.scale({ scaleX: 0.8, scaleY: 0.8 })}
                 >
                   -
                 </button>
-                <button className='btn btn-lg' onClick={zoom.reset}>
+                <button className="btn btn-lg" onClick={zoom.reset}>
                   Reset
                 </button>
               </div>
@@ -180,8 +106,8 @@ export default function GeoCustom({
       </Zoom>
       <label>
         projection:{' '}
-        <select onChange={(event) => setProjection(event.target.value)}>
-          {Object.keys(PROJECTIONS).map((projectionName) => (
+        <select onChange={event => setProjection(event.target.value)}>
+          {Object.keys(PROJECTIONS).map(projectionName => (
             <option key={projectionName} value={projectionName}>
               {projectionName}
             </option>
